@@ -29,10 +29,11 @@ int main() {
 
   // Get platforms Info
   cl_ushort idx;
+  printf("Number of platforms : %d\n", num_platforms);
   for(idx = 0; idx < num_platforms; idx ++) {
     clGetPlatformInfo(platforms[idx], CL_PLATFORM_NAME, sizeof(char) * PLATFORM_NAME, platform_name, NULL);
     clGetPlatformInfo(platforms[idx], CL_PLATFORM_VENDOR, sizeof(char) * PLATFORM_VENDOR, platform_vendor, NULL);
-    printf("platform : %d\n", idx);
+    printf("[*] platform : %d\n", idx);
     printf("CL_PLATFORM_NAME : %s\n", platform_name);
     printf("CL_PLATFORM_VENDOR : %s\n", platform_vendor);
   }
