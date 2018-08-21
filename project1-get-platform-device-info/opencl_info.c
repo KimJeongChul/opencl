@@ -22,7 +22,7 @@ int main() {
 
   // device variables
   cl_uint num_devices;
-  cl_deviced_id *devices;
+  cl_device_id *devices;
   char device_name[DEVICE_NAME];
   char device_type[DEVICE_NAME];
   cl_uint device_max_compute_units;
@@ -58,15 +58,15 @@ int main() {
 
   // Get number of devices
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
-  devices = (cl_deviced_id *)malloc(sizeof(cl_deviced_id) * num_devices);
+  devices = (cl_device_id *)malloc(sizeof(cl_deviced_id) * num_devices);
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, devices, NULL);
   CHECK_ERROR(err);
   printf("[*] Number of devices : %d\n", num_devices);
 
   // Get devices info
   for(idx = 0; idx < num_devices; idx ++) {
-  	clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(char) * DEVICE_TYPE, device_type, NULL);
-  	clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(char) * DEVICE_NAME, device_name, NULL);
+  	clGetDeviceInfo(devices[idx], CL_DEVICE_TYPE, sizeof(char) * DEVICE_TYPE, device_type, NULL);
+  	clGetDeviceInfo(devices[idx], CL_DEVICE_NAME, sizeof(char) * DEVICE_NAME, device_name, NULL);
   	printf("[*] device : %d\n", idx);
   	printf("CL_DEVICE_TYPE : %s\n", device_type);
     printf("CL_DEVICE_NAME : %s\n", device_name);
