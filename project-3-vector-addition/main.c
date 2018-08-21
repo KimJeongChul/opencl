@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <CL/cl.h>
-#define VECTOR_SIZE 65536
+#define VECTOR_SIZE 32786
 #define LOCAL_SIZE 256
 
 #define CHECK_ERROR(err) \
@@ -177,8 +177,9 @@ int main() {
   // Evaluate Vector C
   for(idx = 0; idx < VECTOR_SIZE; idx++) {
     if(A[idx] + B[idx] != C[idx]) {
-      printf("Verification failed! A[%d] = %d, B[%d] = %d, C[%d] = %c\n",
+      printf("Verification failed! A[%d] = %d, B[%d] = %d, C[%d] = %d\n",
         idx, A[idx], idx, B[idx], idx, C[idx]);
+      break;
     }
   }
   if (idx == VECTOR_SIZE) {
