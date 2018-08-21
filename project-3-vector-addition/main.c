@@ -1,14 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <CL/cl.h>
-#define VECTOR_SIZE 90000
-#define LOCAL_SIZE 32
+#define VECTOR_SIZE 16384
+#define LOCAL_SIZE 256
 
 #define CHECK_ERROR(err) \
   if (err != CL_SUCCESS) { \
     printf("[%s:%d] OpenCL error %d\n", __FILE__, __LINE__, err); \
     exit(EXIT_FAILURE); \
   }
+
+double get_time() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (double)tv.tv_sec + (double)1e-6 * tv.tv_usec;
+}
 
 char *get_source_code(const char *file_name, size_t *len) {
   char *source_code;
@@ -148,7 +156,24 @@ int main() {
       printf("%d", C[idx]);
   printf("Finished !\n");
 
+  // Evaluate Vector C
+  for(idx = 0; idx < VECTOR_SIZE; idx++) {
+    if(A[idx] + B[idx] != C[idx]) {
+      printf("Verification failed! A[%d] = %d, B[%d] = %d, C[%d] = %c\n",
+        idx, A[idx], idx, B[idx], idx, C[idx]);
+    }
+  }
+  if (idx == VECTOR_SIZE) {
+    printf("Verification success!\n");
+  }
+
   // Release OpenCL object
+  clReleaseMemObject(bufferA);
+  clReleaseMemObject(bufferB);
+  clReleaseMemObject(bufferC);
+  free(A);
+  free(B);
+  free(C);
   clReleaseKernel(kernel);
   clReleaseProgram(program);
   clReleaseCommandQueue(queue);
