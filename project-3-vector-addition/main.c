@@ -42,7 +42,7 @@ char *get_source_code(const char *file_name, size_t *len) {
 }
 
 int main() {
-  // OpenCl Variables
+  // OpenCl variables
   cl_platform_id platform;
   cl_device_id device;
   cl_context context;
@@ -55,6 +55,11 @@ int main() {
   cl_int err;
   size_t global_size = VECTOR_SIZE;
   size_t local_size = LOCAL_SIZE;
+
+  // Time variables
+  double start;
+  double end;
+
 
   // Create Vector A, B, C
   int *A = (int*)malloc(sizeof(int) * VECTOR_SIZE);
@@ -138,22 +143,35 @@ int main() {
   CHECK_ERROR(err);
 
   // Set Kernel arguments
+  start = get_time();
   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferA);
   CHECK_ERROR(err);
 
   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
   CHECK_ERROR(err);
+  end = get_time();
+
+  printf("Send Vector A, B to GPU : %f seconds elapsed\n", end - start);
+
 
   // Execute Kernel
+  start = get_time();
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+  end = get_time();
+
+  printf("Calculate C : %f seconds elapsed\n", end - start);
 
   // Read Buffer
+  start = get_time();
   err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(int) * VECTOR_SIZE, C, 0, NULL, NULL);
   CHECK_ERROR(err);
 
+  end = get_time();
+  printf("Receive C from GPU : %f seconds elapsed\n", end - start);
+
   for(idx = 0; idx < VECTOR_SIZE; idx++)
-    if(idx % 10000 == 0)
-      printf("%d", C[idx]);
+    if(idx % 1000 == 0)
+      printf("%d\n", C[idx]);
   printf("Finished !\n");
 
   // Evaluate Vector C
@@ -179,6 +197,5 @@ int main() {
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
 
-  printf("Finished!\n");
   return 0;
 }
