@@ -84,9 +84,9 @@ int main() {
   	  CHECK_ERROR(err);
   	  printf("[*] device : %d\n", idx);
   	  if (device_type & CL_DEVICE_TYPE_CPU)
-  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_CPU");
+  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_CPU\n");
   	  if (device_type & CL_DEVICE_TYPE_GPU)
-  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_GPU");
+  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_GPU\n");
       printf("CL_DEVICE_NAME : %s\n", device_name);
       printf("CL_DEVICE_MAX_COMPUTE_UNITS : %d\n", device_max_compute_units);
       printf("CL_DEVICE_MAX_WORK_GROUP_SIZE : %d\n", device_max_work_group_size);
