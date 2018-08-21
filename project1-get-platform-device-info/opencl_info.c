@@ -57,9 +57,9 @@ int main() {
   }
 
   // Get number of devices
-  clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
-  devices = (cl_device_id *)malloc(sizeof(cl_deviced_id) * num_devices);
-  clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, devices, NULL);
+  clGetDeviceIDs(platforms, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
+  devices = (cl_device_id *)malloc(sizeof(cl_device_id) * num_devices);
+  clGetDeviceIDs(platforms, CL_DEVICE_TYPE_ALL, num_devices, devices, NULL);
   CHECK_ERROR(err);
   printf("[*] Number of devices : %d\n", num_devices);
 
