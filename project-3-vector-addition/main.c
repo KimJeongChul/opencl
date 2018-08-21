@@ -140,7 +140,7 @@ int main() {
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
   // Read Buffer
-  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(int) * VECTOR_SIZE, C, NULL, NULL);
+  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(int) * VECTOR_SIZE, C, 0, NULL, NULL);
   CHECK_ERROR(err);
 
   for(idx = 0; idx < VECTOR_SIZE; idx++)
