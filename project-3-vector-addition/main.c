@@ -55,7 +55,7 @@ int main() {
 
   // Initial Vector A, B
   cl_ushort idx;
-  for(idx = 0; idx < VECTOR_SIZE; i++) {
+  for(idx = 0; idx < VECTOR_SIZE; idx++) {
     A[idx] = rand() % 100;
     B[idx] = rand() % 100;
   }
@@ -140,7 +140,7 @@ int main() {
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
   // Read Buffer
-  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(int) * VECTOR_SIZE, NULL, NULL);
+  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(int) * VECTOR_SIZE, C, NULL, NULL);
   CHECK_ERROR(err);
 
   for(idx = 0; idx < VECTOR_SIZE; idx++)
