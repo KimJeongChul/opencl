@@ -3,8 +3,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <CL/cl.h>
-#define VECTOR_SIZE 16384
-#define LOCAL_SIZE 256
+#define VECTOR_SIZE 180000
+#define LOCAL_SIZE 200
 
 #define CHECK_ERROR(err) \
   if (err != CL_SUCCESS) { \
