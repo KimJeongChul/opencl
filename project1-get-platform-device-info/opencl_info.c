@@ -34,7 +34,7 @@ int main() {
     clGetPlatformInfo(platforms[idx], CL_PLATFORM_VENDOR, sizeof(char) * PLATFORM_VENDOR, platform_vendor, NULL);
     printf("platform : %d\n", idx);
     printf("CL_PLATFORM_NAME : %s\n", platform_name);
-    printf("CL_PLATFORM_VENDOR : $s\n", platform_vendor);
+    printf("CL_PLATFORM_VENDOR : %s\n", platform_vendor);
   }
 
   return 0;
