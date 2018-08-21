@@ -4,7 +4,6 @@
 #define PLATFORM_NAME 256
 #define PLATFORM_VENDOR 256
 #define DEVICE_NAME 256
-# define DEVICE_TYPE 256
 
 
 #define CHECK_ERROR(err) \
@@ -24,7 +23,7 @@ int main() {
   cl_uint num_devices;
   cl_device_id *devices;
   char device_name[DEVICE_NAME];
-  char device_type[DEVICE_TYPE];
+  cl_device_type device_type;
   cl_uint device_max_compute_units;
   size_t device_max_work_group_size;
   cl_ulong device_global_mem_size;
@@ -68,7 +67,7 @@ int main() {
 
   	// Get devices info
   	for(idx = 0; idx < num_devices; idx ++) {
-  	  clGetDeviceInfo(devices[idx], CL_DEVICE_TYPE, sizeof(char) * DEVICE_TYPE, device_type, NULL);
+  	  clGetDeviceInfo(devices[idx], CL_DEVICE_TYPE, sizeof(cl_device_type) , &device_type, NULL);
   	  err = clGetDeviceInfo(devices[idx], CL_DEVICE_NAME, sizeof(char) * DEVICE_NAME, device_name, NULL);
   	  CHECK_ERROR(err);
   	  err = clGetDeviceInfo(devices[idx], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &device_max_compute_units, NULL);
@@ -84,7 +83,10 @@ int main() {
   	  err = clGetDeviceInfo(devices[idx], CL_DEVICE_HOST_UNIFIED_MEMORY, sizeof(cl_ulong), &device_host_unified_memory, NULL);
   	  CHECK_ERROR(err);
   	  printf("[*] device : %d\n", idx);
-  	  printf("CL_DEVICE_TYPE : %s\n", device_type);
+  	  if (device_type & CL_DEVICE_TYPE_CPU)
+  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_CPU");
+  	  if (device_type & CL_DEVICE_TYPE_GPU)
+  	  	printf("CL_DEVICE_TYPE : CL_DEVICE_TYPE_GPU");
       printf("CL_DEVICE_NAME : %s\n", device_name);
       printf("CL_DEVICE_MAX_COMPUTE_UNITS : %d\n", device_max_compute_units);
       printf("CL_DEVICE_MAX_WORK_GROUP_SIZE : %d\n", device_max_work_group_size);
