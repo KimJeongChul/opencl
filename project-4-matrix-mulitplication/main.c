@@ -103,27 +103,25 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   cl_mem bufferA, bufferB, bufferC;
 
   // Create buffer
-  bufferA = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * ROW_A * COL_A,
+  bufferA = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*ROW_A*COL_A,
     NULL, &err);
   CHECK_ERROR(err);
 
-  bufferB = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * COL_A * COL_B,
+  bufferB = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*COL_A*COL_B,
     NULL, &err);
   CHECK_ERROR(err);
 
-  bufferC = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float) * ROW_A * COL_B,
+  bufferC = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*ROW_A*COL_B,
     NULL, &err);
   CHECK_ERROR(err);
 
   double start_time = get_time();
 
   // Write buffer
-  err = clEnqueueWriteBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float) * ROW_A * COL_A, A,
-    0, NULL, NULL);
+  err = clEnqueueWriteBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float)*ROW_A*COL_A, A, 0, NULL, NULL);
   CHECK_ERROR(err);
 
-  err = clEnqueueWriteBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float) * COL_A * COL_B, B,
-    0, NULL, NULL);
+  err = clEnqueueWriteBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float)*COL_A*COL_B, B, 0, NULL, NULL);
   CHECK_ERROR(err);
 
   // Set kernel arguments
@@ -153,12 +151,10 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   global_size[1] = (global_size[1] + local_size[1] - 1) / local_size[1] * local_size[1];
 
   // Enquque nd range kernel
-  err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, local_size,
-    0, NULL, NULL);
+  err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, local_size, 0, NULL, NULL);
   CHECK_ERROR(err);
 
-  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(float) * ROW_A * COL_B, C,
-    0, NULL, NULL);
+  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(float)*ROW_A*COL_B, C, 0, NULL, NULL);
   CHECK_ERROR(err);
 
   double end_time = get_time();
