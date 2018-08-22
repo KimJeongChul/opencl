@@ -26,6 +26,115 @@ cl_kernel kernel_unsample;
 // Error Variables
 cl_int err;
 
+void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
+    int H, int W, int K, int C, int stride) {
+    /*
+    __global float *in,
+    __global float *out,
+    __global float *weight,
+    __global float *bias,
+    int H, int W, int K, int C, int stride
+    */
+    err = clSetKernelArg(kernel_conv, 0, sizeof(cl_mem), buf_in);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 1, sizeof(cl_mem), buf_out);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 2, sizeof(cl_mem), buf_weight);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 3, sizeof(cl_mem), buf_bias);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 4, sizeof(int), &H);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 5, sizeof(int), &W);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 6, sizeof(int), &K);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 7, sizeof(int), &C);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_conv, 8, sizeof(int), &stride);
+    CHECK_ERROR(err);
+}
+
+void set_kernel_fc_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
+    int K, int C) {
+    /*
+    __global float *in,
+    __global float *out,
+    __global float *weight,
+    __global float *bias,
+    int K, int C
+    */
+    err = clSetKernelArg(kernel_fc, 0, sizeof(cl_mem), buf_in);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fc, 1, sizeof(cl_mem), buf_out);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fc, 2, sizeof(cl_mem), buf_weight);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fc, 3, sizeof(cl_mem), buf_bias);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fc, 4, sizeof(int), &K);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fc, 5, sizeof(int), &C);
+    CHECK_ERROR(err);
+}
+
+void set_kernel_relu_arguments(cl_mem* buf_inout, int CHW) {
+    /*
+    __global float *inout, 
+    int CHW
+    */
+    err = clSetKernelArg(kernel_relu, 0, sizeof(cl_mem), buf_inout);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_relu, 1, sizeof(int), &CHW);
+    CHECK_ERROR(err);
+}
+
+void set_kernel_sigmoid_arguments(cl_mem* buf_inout, int CHW) {
+    /*
+    __global float *inout, 
+    int CHW
+    */
+    err = clSetKernelArg(kernel_sigmoid, 0, sizeof(cl_mem), buf_inout);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_sigmoid, 1, sizeof(int), &CHW);
+    CHECK_ERROR(err);
+}
+
+void set_kernel_fuse_arguments(cl_mem* buf_ml, cl_mem* buf_gf, cl_mem* buf_inout) {
+    /*
+    __global float* ml,
+    __global float* gf,
+    __global float* out
+    */
+    err = clSetKernelArg(kernel_fuse, 0, sizeof(cl_mem), buf_ml);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fuse, 1, sizeof(cl_mem), buf_gf);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fuse, 2, sizeof(cl_mem), buf_inout);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_fuse, 3, sizeof(int), &CHW);
+    CHECK_ERROR(err);
+}
+
+void set_kernel_unsample_arguments(cl_mem* buf_in, cl_mem* buf_out,
+    int H, int W, int C) {
+    /*
+    __global float* in,
+    __global float* out, 
+    int H, int W, int C
+    */
+    err = clSetKernelArg(kernel_unsample, 0, sizeof(cl_mem), buf_in);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_unsample, 1, sizeof(cl_mem), buf_out);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_unsample, 2, sizeof(int), &H);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_unsample, 3, sizeof(int), &W);
+    CHECK_ERROR(err);
+    err = clSetKernelArg(kernel_unsample, 4, sizeof(int), &C);
+    CHECK_ERROR(err);
+}
+
 void colorizer_init() {
     // Get platform
     err = clGetPlatformIDs(1, &platform, NULL);
@@ -96,80 +205,494 @@ void colorizer_init() {
 }
 
 void colorizer(int nimg, float *network, float *inputs, float *outputs) {
+    cl_mem input, dest;
+    printf(sizeof(network))
+    input = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
     /*
-     * TODO
-     * Implement here.
-     * See "colorizer_seq.c" if you don't know what to do.
+     * Low-Level Feature Network
      */
-
-    // split network into each layer's parameter
+    // Create and Write ll_conv1_w buffer
     float *ll_conv1_w = network; network += 64 * 1 * 3 * 3;
-    float *ll_conv1_b = network; network += 64;
-    float *ll_conv2_w = network; network += 128 * 64 * 3 * 3;
-    float *ll_conv2_b = network; network += 128;
-    float *ll_conv3_w = network; network += 128 * 128 * 3 * 3;
-    float *ll_conv3_b = network; network += 128;
-    float *ll_conv4_w = network; network += 256 * 128 * 3 * 3;
-    float *ll_conv4_b = network; network += 256;
-    float *ll_conv5_w = network; network += 256 * 256 * 3 * 3;
-    float *ll_conv5_b = network; network += 256;
-    float *ll_conv6_w = network; network += 512 * 256 * 3 * 3;
-    float *ll_conv6_b = network; network += 512;
-    float *ml_conv1_w = network; network += 512 * 512 * 3 * 3;
-    float *ml_conv1_b = network; network += 512;
-    float *ml_conv2_w = network; network += 256 * 512 * 3 * 3;
-    float *ml_conv2_b = network; network += 256;
-    float *gf_conv1_w = network; network += 512 * 512 * 3 * 3;
-    float *gf_conv1_b = network; network += 512;
-    float *gf_conv2_w = network; network += 512 * 512 * 3 * 3;
-    float *gf_conv2_b = network; network += 512;
-    float *gf_conv3_w = network; network += 512 * 512 * 3 * 3;
-    float *gf_conv3_b = network; network += 512;
-    float *gf_conv4_w = network; network += 512 * 512 * 3 * 3;
-    float *gf_conv4_b = network; network += 512;
-    float *gf_fc1_w = network; network += 1024 * 25088;
-    float *gf_fc1_b = network; network += 1024;
-    float *gf_fc2_w = network; network += 512 * 1024;
-    float *gf_fc2_b = network; network += 512;
-    float *gf_fc3_w = network; network += 256 * 512;
-    float *gf_fc3_b = network; network += 256;
-    float *co_conv1_w = network; network += 256 * 512 * 3 * 3;
-    float *co_conv1_b = network; network += 256;
-    float *co_conv2_w = network; network += 128 * 256 * 3 * 3;
-    float *co_conv2_b = network; network += 128;
-    float *co_conv3_w = network; network += 64 * 128 * 3 * 3;
-    float *co_conv3_b = network; network += 64;
-    float *co_conv4_w = network; network += 64 * 64 * 3 * 3;
-    float *co_conv4_b = network; network += 64;
-    float *co_conv5_w = network; network += 32 * 64 * 3 * 3;
-    float *co_conv5_b = network; network += 32;
-    float *co_conv6_w = network; network += 2 * 32 * 3 * 3;
-    float *co_conv6_b = network; network += 2;
+    buf_ll_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
 
-    // intermediate buffer for feature maps
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv1_w, CL_FALSE, 0, sizeof(network), ll_conv1_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv1_b buffer
+    float *ll_conv1_b = network; network += 64;
+    buf_ll_conv1_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv1_b, CL_FALSE, 0, sizeof(network), ll_conv1_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv2_w buffer
+    float *ll_conv2_w = network; network += 64 * 1 * 3 * 3;
+    buf_ll_conv2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv2_w, CL_FALSE, 0, sizeof(network), ll_conv2_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv2_b buffer
+    float *ll_conv2_b = network; network += 64;
+    buf_ll_conv2_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv2_b, CL_FALSE, 0, sizeof(network), ll_conv2_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv3_w buffer
+    float *ll_conv3_w = network; network += 128 * 128 * 3 * 3;
+    buf_ll_conv3_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv3_w, CL_FALSE, 0, sizeof(network), ll_conv3_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv3_b buffer
+    float *ll_conv3_b = network; network += 128;
+    buf_ll_conv3_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv3_b, CL_FALSE, 0, sizeof(network), ll_conv3_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv4_w buffer
+    float *ll_conv4_w = network; network += 256 * 128 * 3 * 3;
+    buf_ll_conv4_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv4_w, CL_FALSE, 0, sizeof(network), ll_conv4_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv4_b buffer
+    float *ll_conv4_b = network; network += 256;
+    buf_ll_conv4_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv4_b, CL_FALSE, 0, sizeof(network), ll_conv4_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv5_w buffer
+    float *ll_conv5_w = network; network += 256 * 256 * 3 * 3;
+    buf_ll_conv5_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv5_w, CL_FALSE, 0, sizeof(network), ll_conv5_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv5_b buffer
+    float *ll_conv5_b = network; network += 256;
+    buf_ll_conv5_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv5_b, CL_FALSE, 0, sizeof(network), ll_conv5_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv6_w buffer
+    float *ll_conv6_w = network; network += 512 * 256 * 3 * 3;
+    buf_ll_conv6_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv6_w, CL_FALSE, 0, sizeof(network), ll_conv6_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ll_conv6_b buffer
+    float *ll_conv6_b = network; network += 512;
+    buf_ll_conv6_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ll_conv6_b, CL_FALSE, 0, sizeof(network), ll_conv6_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+
+    /*
+     * Mid-Level Feature Network
+     */
+    // Create and Write ml_conv1_w buffer
+    float *ml_conv1_w = network; network += 512 * 512 * 3 * 3;
+    buf_ml_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ml_conv1_w, CL_FALSE, 0, sizeof(network), ml_conv1_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ml_conv1_b buffer
+    float *ml_conv1_b = network; network += 512;
+    buf_ml_conv1_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ml_conv1_b, CL_FALSE, 0, sizeof(network), ml_conv1_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ml_conv2_w buffer
+    float *ml_conv2_w = network; network += 256 * 512 * 3 * 3;
+    buf_ml_conv2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ml_conv2_w, CL_FALSE, 0, sizeof(network), ml_conv2_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write ml_conv2_b buffer
+    float *ml_conv2_b = network; network += 256;
+    buf_ml_conv2_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_ml_conv1_b, CL_FALSE, 0, sizeof(network), ml_conv2_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+
+    /*
+     * Global Feature Network
+     */
+    // Create and Write gf_conv1_w buffer
+    float *gf_conv1_w = network; network += 512 * 512 * 3 * 3;
+    buf_gf_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv1_w, CL_FALSE, 0, sizeof(network), gf_conv1_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv1_b buffer
+    float *gf_conv1_b = network; network += 512;
+    buf_gf_conv1_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv1_b, CL_FALSE, 0, sizeof(network), gf_conv1_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv2_w buffer
+    float *gf_conv2_w = network; network += 512 * 512 * 3 * 3;
+    buf_gf_conv2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv2_w, CL_FALSE, 0, sizeof(network), gf_conv2_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv2_b buffer
+    float *gf_conv2_b = network; network += 512;
+    buf_gf_conv2_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv2_b, CL_FALSE, 0, sizeof(network), gf_conv2_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv3_w buffer
+    float *gf_conv3_w = network; network += 512 * 512 * 3 * 3;
+    buf_gf_conv3_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv3_w, CL_FALSE, 0, sizeof(network), gf_conv3_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv3_b buffer
+    float *gf_conv3_b = network; network += 512;
+    buf_gf_conv3_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv3_b, CL_FALSE, 0, sizeof(network), gf_conv3_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+        
+    // Create and Write gf_conv4_w buffer
+    float *gf_conv4_w = network; network += 512 * 512 * 3 * 3;
+    buf_gf_conv4_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv4_w, CL_FALSE, 0, sizeof(network), gf_conv4_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_conv4_b buffer
+    float *gf_conv4_b = network; network += 512;
+    buf_gf_conv3_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_conv4_b, CL_FALSE, 0, sizeof(network), gf_conv4_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+
+    /*
+     * Global Feature Fully Connected Layer
+     */
+    // Create and Write gf_fc1_w buffer
+    float *gf_fc1_w = network; network += 1024 * 25088;
+    buf_gf_fc1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc1_w, CL_FALSE, 0, sizeof(network), gf_fc1_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_fc1_b buffer
+    float *gf_fc1_b = network; network += 1024;
+    buf_gf_fc1_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc1_b, CL_FALSE, 0, sizeof(network), gf_fc1_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_fc2_w buffer
+    float *gf_fc2_w = network; network += 512 * 1024;
+    buf_gf_fc2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc2_w, CL_FALSE, 0, sizeof(network), gf_fc2_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_fc2_b buffer
+    float *gf_fc2_b = network; network += 512;
+    buf_gf_fc2_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc2_b, CL_FALSE, 0, sizeof(network), gf_fc2_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_fc3_w buffer
+    float *gf_fc3_w = network; network += 512 * 1024;
+    buf_gf_fc3_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc3_w, CL_FALSE, 0, sizeof(network), gf_fc3_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write gf_fc3_b buffer
+    float *gf_fc3_b = network; network += 512;
+    buf_gf_fc3_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_gf_fc3_b, CL_FALSE, 0, sizeof(network), gf_fc3_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    /*
+     * Colorization Layer
+     */
+    // Create and Write co_conv1_w buffer
+    float *co_conv1_w = network; network += 256 * 512 * 3 * 3;
+    buf_co_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv1_w, CL_FALSE, 0, sizeof(network), co_conv1_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv1_b buffer
+    float *co_conv1_b = network; network += 256;
+    buf_co_conv1_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv1_b, CL_FALSE, 0, sizeof(network), co_conv1_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv2_w buffer
+    float *co_conv2_w = network; network += 128 * 256 * 3 * 3;
+    buf_co_conv2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv2_w, CL_FALSE, 0, sizeof(network), co_conv2_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv2_b buffer
+    float *co_conv2_b = network; network += 128;
+    buf_co_conv2_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv2_b, CL_FALSE, 0, sizeof(network), co_conv2_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+    
+    // Create and Write co_conv3_w buffer
+    float *co_conv3_w = network; network += 64 * 128 * 3 * 3;
+    buf_co_conv3_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv3_w, CL_FALSE, 0, sizeof(network), co_conv3_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv3_b buffer
+    float *co_conv3_b = network; network += 64;
+    buf_co_conv3_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv3_b, CL_FALSE, 0, sizeof(network), co_conv3_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+    
+    // Create and Write co_conv4_w buffer
+    float *co_conv4_w = network; network += 64 * 64 * 3 * 3;
+    buf_co_conv4_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv4_w, CL_FALSE, 0, sizeof(network), co_conv4_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv4_b buffer
+    float *co_conv4_b = network; network += 64;
+    buf_co_conv4_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv4_b, CL_FALSE, 0, sizeof(network), co_conv4_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+    
+    // Create and Write co_conv5_w buffer
+    float *co_conv5_w = network; network += 32 * 64 * 3 * 3;
+    buf_co_conv5_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv5_w, CL_FALSE, 0, sizeof(network), co_conv5_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv5_b buffer
+    float *co_conv5_b = network; network += 32;
+    buf_co_conv5_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv5_b, CL_FALSE, 0, sizeof(network), co_conv5_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+    
+    // Create and Write co_conv4_w buffer
+    float *co_conv6_w = network; network += 2 * 32 * 3 * 3;
+    buf_co_conv6_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(network), NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv6_w, CL_FALSE, 0, sizeof(network), co_conv6_w, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    // Create and Write co_conv4_b buffer
+    float *co_conv6_b = network; network += 2;
+    
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_co_conv6_b, CL_FALSE, 0, sizeof(network), co_conv6_b, 0, NULL, NULL);
+    CHECK_ERROR(err);
+    
+
+    /*
+    * Low-Level intermediate buffer for feature maps
+    */
+    // Create ll_fm1 buffer
     float *ll_fm1 = (float*)malloc(64 * 112 * 112 * sizeof(float));
+    buf_ll_fm1  = clCreateBuffer(context, CL_MEM_READ_ONLY, 64 * 112 * 112 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+
+    // Create ll_fm2 buffer
     float *ll_fm2 = (float*)malloc(128 * 112 * 112 * sizeof(float));
+    buf_ll_fm2  = clCreateBuffer(context, CL_MEM_READ_ONLY, 128 * 112 * 112 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+
+    // Create ll_fm3 buffer
     float *ll_fm3 = (float*)malloc(128 * 56 * 56 * sizeof(float));
+    buf_ll_fm3  = clCreateBuffer(context, CL_MEM_READ_ONLY, 128 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create ll_fm4 buffer
     float *ll_fm4 = (float*)malloc(256 * 56 * 56 * sizeof(float));
+    buf_ll_fm4  = clCreateBuffer(context, CL_MEM_READ_ONLY, 256 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create ll_fm5 buffer
     float *ll_fm5 = (float*)malloc(256 * 28 * 28 * sizeof(float));
-    float *ll_fm6 = (float*)malloc(512 * 28 * 28 * sizeof(float));
+    buf_ll_fm5  = clCreateBuffer(context, CL_MEM_READ_ONLY, 256 * 28 * 28 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create ll_fm6 buffer
+    float *ll_fm6 = (float*)malloc(256 * 56 * 56 * sizeof(float));
+    buf_ll_fm6  = clCreateBuffer(context, CL_MEM_READ_ONLY, 256 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+
+    /*
+     * Mid-Level intermediate buffer for feature maps
+    */
+    // Create ml_fm1 buffer
     float *ml_fm1 = (float*)malloc(512 * 28 * 28 * sizeof(float));
-    float *ml_fm2 = (float*)malloc(256 * 28 * 28 * sizeof(float));
+    buf_ml_fm1  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 28 * 28 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create ml_fm2 buffer
+    float *ml_fm2 = (float*)malloc(512 * 28 * 28 * sizeof(float));
+    buf_ml_fm2  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 28 * 28 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    /*
+     * Global intermediate buffer for feature maps
+    */
+    // Create gf_fm1 buffer
     float *gf_fm1 = (float*)malloc(512 * 14 * 14 * sizeof(float));
+    buf_gf_fm1  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 14 * 14 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm2 buffer
     float *gf_fm2 = (float*)malloc(512 * 14 * 14 * sizeof(float));
+    buf_gf_fm2  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 14 * 14 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm3 buffer
     float *gf_fm3 = (float*)malloc(512 * 7 * 7 * sizeof(float));
+    buf_gf_fm3  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 7 * 7 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm4 buffer
     float *gf_fm4 = (float*)malloc(512 * 7 * 7 * sizeof(float));
+    buf_gf_fm4  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * 7 * 7 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm5 buffer
     float *gf_fm5 = (float*)malloc(1024 * sizeof(float));
+    buf_gf_fm5  = clCreateBuffer(context, CL_MEM_READ_ONLY, (1024 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm6 buffer
     float *gf_fm6 = (float*)malloc(512 * sizeof(float));
+    buf_gf_fm6  = clCreateBuffer(context, CL_MEM_READ_ONLY, 512 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create gf_fm7 buffer
     float *gf_fm7 = (float*)malloc(256 * sizeof(float));
+    buf_gf_fm7  = clCreateBuffer(context, CL_MEM_READ_ONLY, 256 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    /*
+     * Mid-Level Global intermediate buffer for feature maps
+    */
+    // Create ml_gf_fused_fm buffer
     float *ml_gf_fused_fm = (float*)malloc(512 * 28 * 28 * sizeof(float));
+    
+    
+    /*
+     * Colorization intermediate buffer for feature maps
+    */
+    // Create co_fm1 buffer
     float *co_fm1 = (float*)malloc(256 * 28 * 28 * sizeof(float));
+    buf_co_fm1 = clCreateBuffer(context, CL_MEM_READ_ONLY, 256 * 28 * 28 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm2 buffer
     float *co_fm2 = (float*)malloc(128 * 28 * 28 * sizeof(float));
+    buf_co_fm2 = clCreateBuffer(context, CL_MEM_READ_ONLY, 128 * 28 * 28 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm3 buffer
     float *co_fm3 = (float*)malloc(128 * 56 * 56 * sizeof(float));
+    buf_co_fm3 = clCreateBuffer(context, CL_MEM_READ_ONLY, 128 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm4 buffer
     float *co_fm4 = (float*)malloc(64 * 56 * 56 * sizeof(float));
+    buf_co_fm4 = clCreateBuffer(context, CL_MEM_READ_ONLY, 64 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm5 buffer
     float *co_fm5 = (float*)malloc(64 * 56 * 56 * sizeof(float));
+    buf_co_fm5 = clCreateBuffer(context, CL_MEM_READ_ONLY, 64 * 56 * 56 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm6 buffer
     float *co_fm6 = (float*)malloc(64 * 112 * 112 * sizeof(float));
+    buf_co_fm6 = clCreateBuffer(context, CL_MEM_READ_ONLY, 64 * 112 * 112 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
+    
+    // Create co_fm7 buffer
     float *co_fm7 = (float*)malloc(32 * 112 * 112 * sizeof(float));
+    buf_co_fm7 = clCreateBuffer(context, CL_MEM_READ_ONLY, 32 * 112 * 112 * sizeof(float), NULL, &err);
+    CHECK_ERROR(err);
 
     // run network for each image
     for (int n = 0; n < nimg; ++n) {
