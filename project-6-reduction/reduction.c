@@ -155,7 +155,7 @@ double reduction_opencl(int *array, int N) {
   CHECK_ERROR(err);
 
   // Write buffer
-  err = clEnqueueWriteBuffer(queue, num, CL_FALSE, 0, sizeof(int) * N, array, 0, NULL, NULL);
+  err = clEnqueueWriteBuffer(queue, bufferArray, CL_FALSE, 0, sizeof(int) * N, array, 0, NULL, NULL);
   CHECK_ERROR(err);
 
   double start_time, end_time;
