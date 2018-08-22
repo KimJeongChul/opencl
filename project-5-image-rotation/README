@@ -1,0 +1,2 @@
+$ make
+$ thorq --add --mode single --device gpu/1080 ./image_rotation [SRC_FILE] [DEST_FILE]
