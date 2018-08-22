@@ -8,6 +8,8 @@
     exit(EXIT_FAILURE); \
   }
 
+double get_time(); // use the get_time() function in mat_mul.c
+
 char *get_source_code(const char *file_name, size_t *len) {
   char *source_code;
   size_t length;
