@@ -42,12 +42,12 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   cl_kernel kernel;
   cl_int err;
 
-  // Get platform id
+  // Get platform
   err = clGetPlatformIDs(1, &platform, NULL);
   CHECK_ERROR(err);
 
-  // Get platform gpu
-  err = clGetPlatformIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+  // Get device gpu
+  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
   CHECK_ERROR(err);
 
   // Create context
@@ -141,7 +141,7 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
 
   // Set global, local size
   size_t global_size[2] = {COL_B, ROW_A};
-  siez_t local_size[2] = {16, 16};
+  size_t local_size[2] = {16, 16};
 
   global_size[0] = (global_size[0] + local_size[0] - 1) / local_size[0] * local_size[0];
   global_size[1] = (global_size[1] + local_size[1] - 1) / local_size[1] * local_size[1];
