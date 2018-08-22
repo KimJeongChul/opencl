@@ -57,6 +57,17 @@ char *get_source_code(const char *file_name, size_t *len) {
 
 void rotate(float *input_image, float *output_image, int image_width, int image_height,
             float sin_theta, float cos_theta) {
+  // OpenCL Variables
+  cl_platform_id platform;
+  cl_device_id device;
+  cl_context context;
+  cl_command_queue queue;
+  cl_program program;
+  char *kernel_source;
+  size_t kernel_source_size;
+  cl_kernel kernel;
+  cl_int err;
+
   // Get platform
   err = clGetPlatformIDs(1, &platform, NULL);
   CHECK_ERROR(err);
