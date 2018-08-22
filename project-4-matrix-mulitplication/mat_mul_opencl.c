@@ -168,6 +168,7 @@ int mat_mul_opencl(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B)
   clReleaseProgram(program);
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
+  
   printf("Finished!\n");
 
   return 0;
