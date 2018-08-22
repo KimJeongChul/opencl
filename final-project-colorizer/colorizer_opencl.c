@@ -59,7 +59,7 @@ void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weigh
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_conv, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -90,7 +90,7 @@ void set_kernel_fc_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_fc, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -109,7 +109,7 @@ void set_kernel_relu_arguments(cl_mem* buf_inout, int CHW, size_t size) {
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_relu, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -128,7 +128,7 @@ void set_kernel_sigmoid_arguments(cl_mem* buf_inout, int CHW, size_t size) {
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_sigmoid, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -152,7 +152,7 @@ void set_kernel_fuse_arguments(cl_mem* buf_ml, cl_mem* buf_gf, cl_mem* buf_inout
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_fuse, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -179,7 +179,7 @@ void set_kernel_upsample_arguments(cl_mem* buf_in, cl_mem* buf_out,
     
     global_size = (global_size + local_size - 1) / local_size * local_size;
     
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+    err = clEnqueueNDRangeKernel(queue, kernel_unsample, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
 }
 
@@ -701,7 +701,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     
     // Create gf_fm5 buffer
     float *gf_fm5 = (float*)malloc(1024 * sizeof(float));
-    buf_gf_fm5  = clCreateBuffer(context, CL_MEM_READ_WRITE, (1024 * sizeof(float), NULL, &err);
+    buf_gf_fm5  = clCreateBuffer(context, CL_MEM_READ_WRITE, 1024 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
     
     // Create gf_fm6 buffer
@@ -831,9 +831,6 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     }
 
     // Release OpenCL object
-    clReleaseMemObject(buf_input);
-    clReleaseMemObject(buf_output);
-
     clReleaseMemObject(buf_ll_conv1_w);
     clReleaseMemObject(buf_ll_conv1_b);
     clReleaseMemObject(buf_ll_conv2_w);
