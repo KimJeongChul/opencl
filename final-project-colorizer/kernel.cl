@@ -1,10 +1,10 @@
 __kernel void conv(__global float *in,
-	__global float *out,
-	__global float *weight,
-	__global float *bias,
-	int H, int W, int K, int C, int stride)
+    __global float *out,
+    __global float *weight,
+    __global float *bias,
+    int H, int W, int K, int C, int stride)
 {
-	int HOUT = H / stride, WOUT = W / stride;
+    int HOUT = H / stride, WOUT = W / stride;
     for (int k = 0; k < K; ++k) {
         for (int hout = 0; hout < HOUT; ++hout) {
             for (int wout = 0; wout < WOUT; ++wout) {
@@ -30,10 +30,10 @@ __kernel void conv(__global float *in,
 }
 
 __kernel void fc(__global float *in,
-	__global float *out,
-	__global float *weight,
-	__global float *bias,
-	int K, int C)
+    __global float *out,
+    __global float *weight,
+    __global float *bias,
+    int K, int C)
 {
     for (int k = 0; k < K; ++k) {
         float s = 0;
@@ -47,21 +47,21 @@ __kernel void fc(__global float *in,
 
 __kernel void relu(__global float *inout, int CHW) {
     for (int chw = 0; chw < CHW; ++chw) {
-        inout[chw] = fmaxf(inout[chw], 0);
+        inout[chw] = float(fmax(inout[chw], 0));
     }
 }
 
 __kernel void sigmoid(__global float *inout, int CHW) {
     for (int chw = 0; chw < CHW; ++chw) {
-        inout[chw] = 1 / (1 + expf(-inout[chw]));
+        inout[chw] = 1 / (1 + float(exp(-inout[chw])));
     }
 }
 
 __kernel void fuse(__global float* ml,
-	__global float* gf,
-	__global float* out)
+    __global float* gf,
+    __global float* out)
 {
-	for (int k = 0; k < 256; ++k) {
+    for (int k = 0; k < 256; ++k) {
         for (int h = 0; h < 28; ++h) {
             for (int w = 0; w < 28; ++w) {
                 out[k * 28 * 28 + h * 28 + w] = ml[k * 28 * 28 + h * 28 + w];
@@ -78,10 +78,10 @@ __kernel void fuse(__global float* ml,
 }
 
 __kernel void unsample(__global float* in,
-	__global float* out, 
-	int H, int W, int C)
+    __global float* out, 
+    int H, int W, int C)
 {
-	for (int c = 0; c < C; ++c) {
+    for (int c = 0; c < C; ++c) {
         for (int h = 0; h < H; ++h) {
             for (int w = 0; w < W; ++w) {
                 float t = in[c * H * W + h * W + w];
