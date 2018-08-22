@@ -183,6 +183,29 @@ void set_kernel_upsample_arguments(cl_mem* buf_in, cl_mem* buf_out,
     CHECK_ERROR(err);
 }
 
+char *get_source_code(const char *file_name, size_t *len) {
+  char *source_code;
+  size_t length;
+  FILE *file = fopen(file_name, "r");
+  if (file == NULL) {
+    printf("[%s:%d] Failed to open %s\n", __FILE__, __LINE__, file_name);
+    exit(EXIT_FAILURE);
+  }
+
+  fseek(file, 0, SEEK_END);
+  length = (size_t)ftell(file);
+  rewind(file);
+
+  source_code = (char *)malloc(length + 1);
+  fread(source_code, length, 1, file);
+  source_code[length] = '\0';
+
+  fclose(file);
+
+  *len = length;
+  return source_code;
+}
+
 void colorizer_init() {
     // Get platform
     err = clGetPlatformIDs(1, &platform, NULL);
@@ -459,7 +482,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
 
     // Create and Write gf_conv4_b buffer
     float *gf_conv4_b = network; network += 512;
-    buf_gf_conv3_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 512, NULL, &err);
+    buf_gf_conv4_b  = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 512, NULL, &err);
     CHECK_ERROR(err);
 
     err = clEnqueueWriteBuffer(queue, buf_gf_conv4_b, CL_FALSE, 0, sizeof(float) * 512, gf_conv4_b, 0, NULL, NULL);
