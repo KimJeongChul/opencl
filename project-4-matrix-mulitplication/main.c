@@ -8,6 +8,12 @@
     exit(EXIT_FAILURE); \
   }
 
+double get_time() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (double)tv.tv_sec + (double)1e-6 * tv.tv_usec;
+}
+
 char *get_source_code(const char *file_name, size_t *len) {
   char *source_code;
   size_t length;
@@ -112,11 +118,11 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   double start_time = get_time();
 
   // Write buffer
-  err = clEnququeBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float) * ROW_A * COL_A,
+  err = clEnququeWriteBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float) * ROW_A * COL_A,
     0, NULL, NULL);
   CHECK_ERROR(err);
 
-  err = clEnququeBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float) * COL_A * COL_B,
+  err = clEnququeWriteBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float) * COL_A * COL_B,
     0, NULL, NULL);
   CHECK_ERROR(err);
 
