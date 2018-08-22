@@ -118,11 +118,11 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   double start_time = get_time();
 
   // Write buffer
-  err = clEnququeWriteBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float) * ROW_A * COL_A,
+  err = clEnqueueWriteBuffer(queue, bufferA, CL_FALSE, 0, sizeof(float) * ROW_A * COL_A,
     0, NULL, NULL);
   CHECK_ERROR(err);
 
-  err = clEnququeWriteBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float) * COL_A * COL_B,
+  err = clEnqueueWriteBuffer(queue, bufferB, CL_FALSE, 0, sizeof(float) * COL_A * COL_B,
     0, NULL, NULL);
   CHECK_ERROR(err);
 
