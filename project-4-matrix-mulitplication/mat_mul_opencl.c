@@ -8,12 +8,6 @@
     exit(EXIT_FAILURE); \
   }
 
-double get_time() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (double)tv.tv_sec + (double)1e-6 * tv.tv_usec;
-}
-
 char *get_source_code(const char *file_name, size_t *len) {
   char *source_code;
   size_t length;
@@ -168,7 +162,7 @@ int mat_mul_opencl(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B)
   clReleaseProgram(program);
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
-  
+
   printf("Finished!\n");
 
   return 0;
