@@ -47,13 +47,13 @@ __kernel void fc(__global float *in,
 
 __kernel void relu(__global float *inout, int CHW) {
     for (int chw = 0; chw < CHW; ++chw) {
-        inout[chw] = float(fmax(inout[chw], 0));
+        inout[chw] = fmax(inout[chw], 0);
     }
 }
 
 __kernel void sigmoid(__global float *inout, int CHW) {
     for (int chw = 0; chw < CHW; ++chw) {
-        inout[chw] = 1 / (1 + float(exp(-inout[chw])));
+        inout[chw] = 1 / (1 + exp(-inout[chw]));
     }
 }
 
