@@ -157,7 +157,7 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
     0, NULL, NULL);
   CHECK_ERROR(err);
 
-  err = clEnququeReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(float) * ROW_A * COL_B, C,
+  err = clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, sizeof(float) * ROW_A * COL_B, C,
     0, NULL, NULL);
   CHECK_ERROR(err);
 
