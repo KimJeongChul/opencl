@@ -4,6 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+double get_time() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (double)tv.tv_sec + (double)1e-6 * tv.tv_usec;
+}
+
 /*
  * Convolution Layer
  * in : (C, H, W)
@@ -194,58 +201,235 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     float *co_fm6 = (float*)malloc(64 * 112 * 112 * sizeof(float));
     float *co_fm7 = (float*)malloc(32 * 112 * 112 * sizeof(float));
 
+    double start_time, end_time;
     // run network for each image
     for (int n = 0; n < nimg; ++n) {
         float *input = inputs + n * 224 * 224;
         float *output = outputs + n * 2 * 112 * 112;
+        
+        start_time = get_time();
         conv(input, ll_fm1, ll_conv1_w, ll_conv1_b, 224, 224, 64, 1, 2);
+        end_time = get_time();
+        printf("ll_conv1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm1, 64 * 112 * 112);
+        end_time = get_time();
+        printf("ll_relu1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ll_fm1, ll_fm2, ll_conv2_w, ll_conv2_b, 112, 112, 128, 64, 1);
+        end_time = get_time();
+        printf("ll_conv2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm2, 128 * 112 * 112);
+        end_time = get_time();
+        printf("ll_relu2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ll_fm2, ll_fm3, ll_conv3_w, ll_conv3_b, 112, 112, 128, 128, 2);
+        end_time = get_time();
+        printf("ll_conv3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm3, 128 * 56 * 56);
+        end_time = get_time();
+        printf("ll_relu3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ll_fm3, ll_fm4, ll_conv4_w, ll_conv4_b, 56, 56, 256, 128, 1);
+        end_time = get_time();
+        printf("ll_conv4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm4, 256 * 56 * 56);
+        end_time = get_time();
+        printf("ll_relu4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ll_fm4, ll_fm5, ll_conv5_w, ll_conv5_b, 56, 56, 256, 256, 2);
+        end_time = get_time();
+        printf("ll_conv5 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm5, 256 * 28 * 28);
+        end_time = get_time();
+        printf("ll_relu5 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ll_fm5, ll_fm6, ll_conv6_w, ll_conv6_b, 28, 28, 512, 256, 1);
+        end_time = get_time();
+        printf("ll_conv6 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ll_fm6, 512 * 28 * 28);
+        end_time = get_time();
+        printf("ll_relu6 elasped time : %f sec\n", end_time - start_time);
 
+        start_time = get_time();
         conv(ll_fm6, ml_fm1, ml_conv1_w, ml_conv1_b, 28, 28, 512, 512, 1);
+        end_time = get_time();
+        printf("ll_conv7 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ml_fm1, 512 * 28 * 28);
+        end_time = get_time();
+        printf("ml_relu1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(ml_fm1, ml_fm2, ml_conv2_w, ml_conv2_b, 28, 28, 256, 512, 1);
+        end_time = get_time();
+        printf("ml_conv1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(ml_fm2, 256 * 28 * 28);
+        end_time = get_time();
+        printf("ml_relu2 elasped time : %f sec\n", end_time - start_time);
 
+        start_time = get_time();
         conv(ll_fm6, gf_fm1, gf_conv1_w, gf_conv1_b, 28, 28, 512, 512, 2);
+        end_time = get_time();
+        printf("ml_conv2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm1, 512 * 14 * 14);
+        end_time = get_time();
+        printf("gf_fm_relu1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(gf_fm1, gf_fm2, gf_conv2_w, gf_conv2_b, 14, 14, 512, 512, 1);
+        end_time = get_time();
+        printf("gf_fm_conv1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm2, 512 * 14 * 14);
+        end_time = get_time();
+        printf("gf_fm_relu2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(gf_fm2, gf_fm3, gf_conv3_w, gf_conv3_b, 14, 14, 512, 512, 2);
+        end_time = get_time();
+        printf("gf_fm_conv2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm3, 512 * 7 * 7);
+        end_time = get_time();
+        printf("gf_fm_relu3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(gf_fm3, gf_fm4, gf_conv4_w, gf_conv4_b, 7, 7, 512, 512, 1);
+        end_time = get_time();
+        printf("gf_fm_conv3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm4, 512 * 7 * 7);
+        end_time = get_time();
+        printf("gf_fm_relu4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         fc(gf_fm4, gf_fm5, gf_fc1_w, gf_fc1_b, 1024, 25088);
+        end_time = get_time();
+        printf("gf_fm_conv4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm5, 1024);
+        end_time = get_time();
+        printf("gf_fm_relu5 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         fc(gf_fm5, gf_fm6, gf_fc2_w, gf_fc2_b, 512, 1024);
+        end_time = get_time();
+        printf("gf_fm fc1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm6, 512);
+        end_time = get_time();
+        printf("gf_fm_relu6 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         fc(gf_fm6, gf_fm7, gf_fc3_w, gf_fc3_b, 256, 512);
+        end_time = get_time();
+        printf("gf_fm fc2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(gf_fm7, 256);
+        end_time = get_time();
+        printf("gf_fm_relu7 elasped time : %f sec\n", end_time - start_time);
 
+        start_time = get_time();
         fuse(ml_fm2, gf_fm7, ml_gf_fused_fm);
+        end_time = get_time();
+        printf("gf_fm_fuse1 elasped time : %f sec\n", end_time - start_time);
 
+        start_time = get_time();
         conv(ml_gf_fused_fm, co_fm1, co_conv1_w, co_conv1_b, 28, 28, 256, 512, 1);
+        end_time = get_time();
+        printf("gf_fm_fuse2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(co_fm1, 256 * 28 * 28);
+        end_time = get_time();
+        printf("co_relu_1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(co_fm1, co_fm2, co_conv2_w, co_conv2_b, 28, 28, 128, 256, 1);
+        end_time = get_time();
+        printf("co_conv_1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(co_fm2, 128 * 28 * 28);
+        end_time = get_time();
+        printf("co_relu_2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         upsample(co_fm2, co_fm3, 28, 28, 128);
+        end_time = get_time();
+        printf("co_upsampe1 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(co_fm3, co_fm4, co_conv3_w, co_conv3_b, 56, 56, 64, 128, 1);
+        end_time = get_time();
+        printf("co_conv_2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(co_fm4, 64 * 56 * 56);
+        end_time = get_time();
+        printf("co_relu_3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(co_fm4, co_fm5, co_conv4_w, co_conv4_b, 56, 56, 64, 64, 1);
+        end_time = get_time();
+        printf("co_conv_3 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(co_fm5, 64 * 56 * 56);
+        end_time = get_time();
+        printf("co_relu_4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         upsample(co_fm5, co_fm6, 56, 56, 64);
+        end_time = get_time();
+        printf("co_upsampe2 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(co_fm6, co_fm7, co_conv5_w, co_conv5_b, 112, 112, 32, 64, 1);
+        end_time = get_time();
+        printf("co_conv_4 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         relu(co_fm7, 32 * 112 * 112);
+        end_time = get_time();
+        printf("co_relu_5 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         conv(co_fm7, output, co_conv6_w, co_conv6_b, 112, 112, 2, 32, 1);
+        end_time = get_time();
+        printf("co_conv_5 elasped time : %f sec\n", end_time - start_time);
+
+        start_time = get_time();
         sigmoid(output, 2 * 112 * 112);
+        end_time = get_time();
+        printf("co_sigmoid_1 elasped time : %f sec\n", end_time - start_time);
     }
 }
