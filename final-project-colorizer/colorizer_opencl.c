@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <CL/cl.h>
 #include "colorizer.h"
 #define CHECK_ERROR(err) \
@@ -28,7 +26,7 @@ cl_kernel kernel_unsample;
 // Error Variables
 cl_int err;
 
-void set_kernel_cov_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, cl_mem buf_bias,
+void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
     int H, int W, int K, int C, int stride, size_t size) {
     /*
     __global float *in,
@@ -37,13 +35,13 @@ void set_kernel_cov_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, 
     __global float *bias,
     int H, int W, int K, int C, int stride
     */
-    err = clSetKernelArg(kernel_conv, 0, sizeof(cl_mem), buf_in);
+    err = clSetKernelArg(kernel_conv, 0, sizeof(cl_mem), &buf_in);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_conv, 1, sizeof(cl_mem), buf_out);
+    err = clSetKernelArg(kernel_conv, 1, sizeof(cl_mem), &buf_out);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_conv, 2, sizeof(cl_mem), buf_weight);
+    err = clSetKernelArg(kernel_conv, 2, sizeof(cl_mem), &buf_weight);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_conv, 3, sizeof(cl_mem), buf_bias);
+    err = clSetKernelArg(kernel_conv, 3, sizeof(cl_mem), &buf_bias);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_conv, 4, sizeof(int), &H);
     CHECK_ERROR(err);
@@ -65,7 +63,7 @@ void set_kernel_cov_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, 
     CHECK_ERROR(err);
 }
 
-void set_kernel_fc_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, cl_mem buf_bias,
+void set_kernel_fc_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
     int K, int C, size_t size) {
     /*
     __global float *in,
@@ -74,13 +72,13 @@ void set_kernel_fc_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, c
     __global float *bias,
     int K, int C
     */
-    err = clSetKernelArg(kernel_fc, 0, sizeof(cl_mem), buf_in);
+    err = clSetKernelArg(kernel_fc, 0, sizeof(cl_mem), &buf_in);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_fc, 1, sizeof(cl_mem), buf_out);
+    err = clSetKernelArg(kernel_fc, 1, sizeof(cl_mem), &buf_out);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_fc, 2, sizeof(cl_mem), buf_weight);
+    err = clSetKernelArg(kernel_fc, 2, sizeof(cl_mem), &buf_weight);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_fc, 3, sizeof(cl_mem), buf_bias);
+    err = clSetKernelArg(kernel_fc, 3, sizeof(cl_mem), &buf_bias);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_fc, 4, sizeof(int), &K);
     CHECK_ERROR(err);
@@ -96,12 +94,12 @@ void set_kernel_fc_arguments(cl_mem buf_in, cl_mem buf_out, cl_mem buf_weight, c
     CHECK_ERROR(err);
 }
 
-void set_kernel_relu_arguments(cl_mem buf_inout, int CHW, size_t size) {
+void set_kernel_relu_arguments(cl_mem* buf_inout, int CHW, size_t size) {
     /*
     __global float *inout, 
     int CHW
     */
-    err = clSetKernelArg(kernel_relu, 0, sizeof(cl_mem), buf_inout);
+    err = clSetKernelArg(kernel_relu, 0, sizeof(cl_mem), &buf_inout);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_relu, 1, sizeof(int), &CHW);
     CHECK_ERROR(err);
@@ -115,12 +113,12 @@ void set_kernel_relu_arguments(cl_mem buf_inout, int CHW, size_t size) {
     CHECK_ERROR(err);
 }
 
-void set_kernel_sigmoid_arguments(cl_mem buf_inout, int CHW, size_t size) {
+void set_kernel_sigmoid_arguments(cl_mem* buf_inout, int CHW, size_t size) {
     /*
     __global float *inout, 
     int CHW
     */
-    err = clSetKernelArg(kernel_sigmoid, 0, sizeof(cl_mem), buf_inout);
+    err = clSetKernelArg(kernel_sigmoid, 0, sizeof(cl_mem), &buf_inout);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_sigmoid, 1, sizeof(int), &CHW);
     CHECK_ERROR(err);
@@ -134,17 +132,17 @@ void set_kernel_sigmoid_arguments(cl_mem buf_inout, int CHW, size_t size) {
     CHECK_ERROR(err);
 }
 
-void set_kernel_fuse_arguments(cl_mem buf_ml, cl_mem buf_gf, cl_mem buf_inout, size_t size) {
+void set_kernel_fuse_arguments(cl_mem* buf_ml, cl_mem* buf_gf, cl_mem* buf_inout, size_t size) {
     /*
     __global float* ml,
     __global float* gf,
     __global float* out
     */
-    err = clSetKernelArg(kernel_fuse, 0, sizeof(cl_mem), buf_ml);
+    err = clSetKernelArg(kernel_fuse, 0, sizeof(cl_mem), &buf_ml);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_fuse, 1, sizeof(cl_mem), buf_gf);
+    err = clSetKernelArg(kernel_fuse, 1, sizeof(cl_mem), &buf_gf);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_fuse, 2, sizeof(cl_mem), buf_inout);
+    err = clSetKernelArg(kernel_fuse, 2, sizeof(cl_mem), &buf_inout);
     CHECK_ERROR(err);
     //err = clSetKernelArg(kernel_fuse, 3, sizeof(int), &CHW);
     //CHECK_ERROR(err);
@@ -158,16 +156,16 @@ void set_kernel_fuse_arguments(cl_mem buf_ml, cl_mem buf_gf, cl_mem buf_inout, s
     CHECK_ERROR(err);
 }
 
-void set_kernel_upsample_arguments(cl_mem buf_in, cl_mem buf_out,
+void set_kernel_upsample_arguments(cl_mem* buf_in, cl_mem* buf_out,
     int H, int W, int C) {
     /*
     __global float* in,
     __global float* out, 
     int H, int W, int C
     */
-    err = clSetKernelArg(kernel_unsample, 0, sizeof(cl_mem), buf_in);
+    err = clSetKernelArg(kernel_unsample, 0, sizeof(cl_mem), &buf_in);
     CHECK_ERROR(err);
-    err = clSetKernelArg(kernel_unsample, 1, sizeof(cl_mem), buf_out);
+    err = clSetKernelArg(kernel_unsample, 1, sizeof(cl_mem), &buf_out);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_unsample, 2, sizeof(int), &H);
     CHECK_ERROR(err);
