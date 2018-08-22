@@ -111,7 +111,7 @@ int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
     NULL, &err);
   CHECK_ERROR(err);
 
-  bufferC = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * ROW_A * COL_B,
+  bufferC = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float) * ROW_A * COL_B,
     NULL, &err);
   CHECK_ERROR(err);
 
