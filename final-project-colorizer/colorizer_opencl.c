@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <CL/cl.h>
 #include "colorizer.h"
 #define CHECK_ERROR(err) \
