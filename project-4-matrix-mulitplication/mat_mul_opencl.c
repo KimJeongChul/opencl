@@ -37,7 +37,7 @@ char *get_source_code(const char *file_name, size_t *len) {
   return source_code;
 }
 
-int main(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
+int mat_mul_opencl(float *A, float *B, float*C, int ROW_A, int COL_A, int COL_B) {
   cl_platform_id platform;
   cl_device_id device;
   cl_context context;
