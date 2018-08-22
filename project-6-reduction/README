@@ -1,0 +1,2 @@
+$ gcc -o reduction reduction.c -lOpenCL
+$ thorq --add --mode single --device gpu/1080 ./reduction
