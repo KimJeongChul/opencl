@@ -636,7 +636,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     * Low-Level intermediate buffer for feature maps
     */
     // Create ll_fm1 buffer
-    /*
+    
     cl_mem buf_ll_fm1, buf_ll_fm2, buf_ll_fm3, buf_ll_fm4, buf_ll_fm5, buf_ll_fm6;
     float *ll_fm1 = (float*)malloc(64 * 112 * 112 * sizeof(float));
     buf_ll_fm1  = clCreateBuffer(context, CL_MEM_READ_WRITE, 64 * 112 * 112 * sizeof(float), NULL, &err);
@@ -666,7 +666,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     float *ll_fm6 = (float*)malloc(256 * 56 * 56 * sizeof(float));
     buf_ll_fm6  = clCreateBuffer(context, CL_MEM_READ_WRITE, 256 * 56 * 56 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
-*/
+
     /*
      * Mid-Level intermediate buffer for feature maps
     */
