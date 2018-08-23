@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <CL/cl.h>
 #include "colorizer.h"
 #define CHECK_ERROR(err) \
@@ -27,6 +29,7 @@ cl_kernel kernel_unsample;
 cl_int err;
 
 void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
+    float* weight, float* bias,
     int H, int W, int K, int C, int stride, size_t size) {
     /*
     __global float *in,
@@ -35,6 +38,19 @@ void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weigh
     __global float *bias,
     int H, int W, int K, int C, int stride
     */
+
+    buf_weight = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 64 * 1 * 3 * 3, NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_weight, CL_FALSE, 0, sizeof(float) * 64 * 1 * 3 * 3, weight, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
+    buf_bias = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 64 * 1 * 3 * 3, NULL, &err);
+    CHECK_ERROR(err);
+
+    err = clEnqueueWriteBuffer(queue, buf_bias, CL_FALSE, 0, sizeof(float) * 64 * 1 * 3 * 3, bias, 0, NULL, NULL);
+    CHECK_ERROR(err);
+
     err = clSetKernelArg(kernel_conv, 0, sizeof(cl_mem), &buf_in);
     CHECK_ERROR(err);
     err = clSetKernelArg(kernel_conv, 1, sizeof(cl_mem), &buf_out);
@@ -61,6 +77,9 @@ void set_kernel_cov_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weigh
     
     err = clEnqueueNDRangeKernel(queue, kernel_conv, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
     CHECK_ERROR(err);
+
+    clReleaseMemObject(buf_weight);
+    clReleaseMemObject(buf_bias);
 }
 
 void set_kernel_fc_arguments(cl_mem* buf_in, cl_mem* buf_out, cl_mem* buf_weight, cl_mem* buf_bias,
@@ -276,57 +295,16 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     /*
      * Low-Level Feature Network
      */
-    // Create and Write ll_conv1_w buffer
-    cl_mem buf_ll_conv1_w, buf_ll_conv1_b;
     float *ll_conv1_w = network; network += 64 * 1 * 3 * 3;
-    buf_ll_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 64 * 1 * 3 * 3, NULL, &err);
-    CHECK_ERROR(err);
-
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv1_w, CL_FALSE, 0, sizeof(float) * 64 * 1 * 3 * 3, ll_conv1_w, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
-    // Create and Write ll_conv1_b buffer
     float *ll_conv1_b = network; network += 64;
-    buf_ll_conv1_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 64, NULL, &err);
-    CHECK_ERROR(err);
 
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv1_b, CL_FALSE, 0, sizeof(float) * 64, ll_conv1_b, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
-    // Create and Write ll_conv2_w buffer
-    cl_mem buf_ll_conv2_w, buf_ll_conv2_b;
     float *ll_conv2_w = network; network += 128 * 64 * 3 * 3;
-    buf_ll_conv2_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 128 * 64 * 3 * 3, NULL, &err);
-    CHECK_ERROR(err);
-
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv2_w, CL_FALSE, 0, sizeof(float) * 128 * 64 * 3 * 3, ll_conv2_w, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
-    // Create and Write ll_conv2_b buffer
     float *ll_conv2_b = network; network += 128;
-    buf_ll_conv2_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 128, NULL, &err);
-    CHECK_ERROR(err);
 
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv2_b, CL_FALSE, 0, sizeof(float) * 128, ll_conv2_b, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
-    // Create and Write ll_conv3_w buffer
-    cl_mem buf_ll_conv3_w, buf_ll_conv3_b;
     float *ll_conv3_w = network; network += 128 * 128 * 3 * 3;
-    buf_ll_conv3_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 128 * 128 * 3 * 3, NULL, &err);
-    CHECK_ERROR(err);
-
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv3_w, CL_FALSE, 0, sizeof(float) * 128 * 128 * 3 * 3, ll_conv3_w, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
-    // Create and Write ll_conv3_b buffer
     float *ll_conv3_b = network; network += 128;
-    buf_ll_conv3_b = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 128, NULL, &err);
-    CHECK_ERROR(err);
 
-    err = clEnqueueWriteBuffer(queue, buf_ll_conv3_b, CL_FALSE, 0, sizeof(float) * 128, ll_conv3_b, 0, NULL, NULL);
-    CHECK_ERROR(err);
-
+    /*
     // Create and Write ll_conv4_w buffer
     cl_mem buf_ll_conv4_w, buf_ll_conv4_b;
     float *ll_conv4_w = network; network += 256 * 128 * 3 * 3;
@@ -378,11 +356,12 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     err = clEnqueueWriteBuffer(queue, buf_ll_conv6_b, CL_FALSE, 0, sizeof(float) * 512, ll_conv6_b, 0, NULL, NULL);
     CHECK_ERROR(err);
 
-
+    */
     /*
      * Mid-Level Feature Network
      */
     // Create and Write ml_conv1_w buffer
+    /*
     cl_mem buf_ml_conv1_w, buf_ml_conv1_b;
     float *ml_conv1_w = network; network += 512 * 512 * 3 * 3;
     buf_ml_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 512 * 512 * 3 * 3, NULL, &err);
@@ -416,10 +395,11 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     err = clEnqueueWriteBuffer(queue, buf_ml_conv1_b, CL_FALSE, 0, sizeof(float) * 256, ml_conv2_b, 0, NULL, NULL);
     CHECK_ERROR(err);
 
-
+    */
     /*
      * Global Feature Network
      */
+    /*
     // Create and Write gf_conv1_w buffer
     cl_mem buf_gf_conv1_w, buf_gf_conv1_b;
     float *gf_conv1_w = network; network += 512 * 512 * 3 * 3;
@@ -488,11 +468,12 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     err = clEnqueueWriteBuffer(queue, buf_gf_conv4_b, CL_FALSE, 0, sizeof(float) * 512, gf_conv4_b, 0, NULL, NULL);
     CHECK_ERROR(err);
 
-
+*/
     /*
      * Global Feature Fully Connected Layer
      */
     // Create and Write gf_fc1_w buffer
+    /*
     cl_mem buf_gf_fc1_w, buf_gf_fc1_b;
     float *gf_fc1_w = network; network += 1024 * 25088;
     buf_gf_fc1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 1024 * 25088, NULL, &err);
@@ -542,11 +523,12 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
 
     err = clEnqueueWriteBuffer(queue, buf_gf_fc3_b, CL_FALSE, 0, sizeof(float) * 512, gf_fc3_b, 0, NULL, NULL);
     CHECK_ERROR(err);
-
+*/
     /*
      * Colorization Layer
      */
     // Create and Write co_conv1_w buffer
+    /*
     cl_mem buf_co_conv1_w, buf_co_conv1_b;
     float *co_conv1_w = network; network += 256 * 512 * 3 * 3;
     buf_co_conv1_w = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float) * 256 * 512 * 3 * 3, NULL, &err);
@@ -648,12 +630,13 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
 
     err = clEnqueueWriteBuffer(queue, buf_co_conv6_b, CL_FALSE, 0, sizeof(float) * 2, co_conv6_b, 0, NULL, NULL);
     CHECK_ERROR(err);
-    
+    */
 
     /*
     * Low-Level intermediate buffer for feature maps
     */
     // Create ll_fm1 buffer
+    /*
     cl_mem buf_ll_fm1, buf_ll_fm2, buf_ll_fm3, buf_ll_fm4, buf_ll_fm5, buf_ll_fm6;
     float *ll_fm1 = (float*)malloc(64 * 112 * 112 * sizeof(float));
     buf_ll_fm1  = clCreateBuffer(context, CL_MEM_READ_WRITE, 64 * 112 * 112 * sizeof(float), NULL, &err);
@@ -683,11 +666,12 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     float *ll_fm6 = (float*)malloc(256 * 56 * 56 * sizeof(float));
     buf_ll_fm6  = clCreateBuffer(context, CL_MEM_READ_WRITE, 256 * 56 * 56 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
-
+*/
     /*
      * Mid-Level intermediate buffer for feature maps
     */
     // Create ml_fm1 buffer
+    /*
     cl_mem buf_ml_fm1, buf_ml_fm2;
     float *ml_fm1 = (float*)malloc(512 * 28 * 28 * sizeof(float));
     buf_ml_fm1  = clCreateBuffer(context, CL_MEM_READ_WRITE, 512 * 28 * 28 * sizeof(float), NULL, &err);
@@ -697,11 +681,12 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     float *ml_fm2 = (float*)malloc(512 * 28 * 28 * sizeof(float));
     buf_ml_fm2  = clCreateBuffer(context, CL_MEM_READ_WRITE, 512 * 28 * 28 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
-    
+    */
     /*
      * Global intermediate buffer for feature maps
     */
     // Create gf_fm1 buffer
+    /*
     cl_mem buf_gf_fm1, buf_gf_fm2, buf_gf_fm3, buf_gf_fm4, buf_gf_fm5, buf_gf_fm6, buf_gf_fm7;
     float *gf_fm1 = (float*)malloc(512 * 14 * 14 * sizeof(float));
     buf_gf_fm1  = clCreateBuffer(context, CL_MEM_READ_WRITE, 512 * 14 * 14 * sizeof(float), NULL, &err);
@@ -736,7 +721,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     float *gf_fm7 = (float*)malloc(256 * sizeof(float));
     buf_gf_fm7  = clCreateBuffer(context, CL_MEM_READ_WRITE, 256 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
-    
+    */
     /*
      * Mid-Level Global intermediate buffer for feature maps
     */
@@ -785,6 +770,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     buf_co_fm7 = clCreateBuffer(context, CL_MEM_READ_WRITE, 32 * 112 * 112 * sizeof(float), NULL, &err);
     CHECK_ERROR(err);
 
+
     // run network for each image
     for (int n = 0; n < nimg; ++n) {
         float *input = inputs + n * 224 * 224;
@@ -802,10 +788,14 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
         err = clEnqueueWriteBuffer(queue, buf_output, CL_FALSE, 0, sizeof(float) * 2 * 112 * 112, output, 0, NULL, NULL);
         CHECK_ERROR(err);
         
-        set_kernel_cov_arguments(buf_input, buf_ll_fm1, buf_ll_conv1_w, buf_ll_conv1_b, 224, 224, 64, 1, 2, 64 * 112 * 112);
+        cl_mem buf_ll_conv1_w, buf_ll_conv1_b;
+        cl_mem buf_ll_conv2_w, buf_ll_conv2_b;
+        cl_mem buf_ll_conv3_w, buf_ll_conv3_b;
+        set_kernel_cov_arguments(buf_input, buf_ll_fm1, buf_ll_conv1_w, buf_ll_conv1_b, ll_conv1_w, ll_conv1_b, 224, 224, 64, 1, 2, 64 * 112 * 112);
         set_kernel_relu_arguments(buf_ll_fm1, 64 * 112 * 112, 64 * 112 * 112);
-        set_kernel_cov_arguments(buf_ll_fm1, buf_ll_fm2, buf_ll_conv2_w, buf_ll_conv2_b, 112, 112, 128, 64, 1, 128 * 112 * 112);
+        set_kernel_cov_arguments(buf_ll_fm1, buf_ll_fm2, buf_ll_conv2_w, buf_ll_conv2_b, ll_conv2_w, ll_conv2_b, 112, 112, 128, 64, 1, 128 * 112 * 112);
         set_kernel_relu_arguments(buf_ll_fm2, 128 * 112 * 112, 128 * 112 * 112);
+        /*
         set_kernel_cov_arguments(buf_ll_fm2, buf_ll_fm3, buf_ll_conv3_w, buf_ll_conv3_b, 112, 112, 128, 128, 2, 128 * 56 * 56);
         set_kernel_relu_arguments(buf_ll_fm3, 128 * 56 * 56, 128 * 56 * 56);
         set_kernel_cov_arguments(buf_ll_fm3, buf_ll_fm4, buf_ll_conv4_w, buf_ll_conv4_b, 56, 56, 256, 128, 1, 256 * 56 * 56);
@@ -851,9 +841,11 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
         set_kernel_relu_arguments(buf_co_fm7, 32 * 112 * 112, 32 * 112 * 112);
         set_kernel_cov_arguments(buf_co_fm7, buf_output, buf_co_conv6_w, buf_co_conv6_b, 112, 112, 2, 32, 1, 2 * 112 * 112);
         set_kernel_sigmoid_arguments(buf_output, 2 * 112 * 112, 2 * 112 * 112);
+        */
     }
 
     // Release OpenCL object
+    /*
     clReleaseMemObject(buf_ll_conv1_w);
     clReleaseMemObject(buf_ll_conv1_b);
     clReleaseMemObject(buf_ll_conv2_w);
@@ -928,6 +920,7 @@ void colorizer(int nimg, float *network, float *inputs, float *outputs) {
     clReleaseMemObject(buf_co_fm5);
     clReleaseMemObject(buf_co_fm6);
     clReleaseMemObject(buf_co_fm7);
+    */
 
     clReleaseKernel(kernel_conv);
     clReleaseKernel(kernel_fc);
