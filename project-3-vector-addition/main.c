@@ -54,25 +54,10 @@ int main() {
   size_t kernel_source_size;
   cl_kernel kernel;
   cl_int err;
-  size_t global_size = VECTOR_SIZE;
-  size_t local_size = LOCAL_SIZE;
 
   // Time variables
   double start;
   double end;
-
-
-  // Create Vector A, B, C
-  int *A = (int*)malloc(sizeof(int) * VECTOR_SIZE);
-  int *B = (int*)malloc(sizeof(int) * VECTOR_SIZE);
-  int *C = (int*)malloc(sizeof(int) * VECTOR_SIZE);
-
-  // Initial Vector A, B
-  cl_ushort idx;
-  for(idx = 0; idx < VECTOR_SIZE; idx++) {
-    A[idx] = rand() % 100;
-    B[idx] = rand() % 100;
-  }
 
   // Get platform
   err = clGetPlatformIDs(1, &platform, NULL);
@@ -118,6 +103,18 @@ int main() {
   }
   CHECK_ERROR(err);
 
+  // Create Vector A, B, C
+  int *A = (int*)malloc(sizeof(int) * VECTOR_SIZE);
+  int *B = (int*)malloc(sizeof(int) * VECTOR_SIZE);
+  int *C = (int*)malloc(sizeof(int) * VECTOR_SIZE);
+
+  // Initial Vector A, B
+  cl_ushort idx;
+  for(idx = 0; idx < VECTOR_SIZE; idx++) {
+    A[idx] = rand() % 100;
+    B[idx] = rand() % 100;
+  }
+
   // Create kernel
   kernel = clCreateKernel(program, "vec_add", &err);
   CHECK_ERROR(err);
@@ -150,13 +147,19 @@ int main() {
 
   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
   CHECK_ERROR(err);
+
+  err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferC);
+  CHECK_ERROR(err);
   end = get_time();
 
   printf("Send Vector A, B to GPU : %f seconds elapsed\n", end - start);
 
-  // Execute Kernel
   start = get_time();
+  // Execute Kernel
+  size_t global_size = VECTOR_SIZE;
+  size_t local_size = LOCAL_SIZE;
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+  CHECK_ERROR(err);
   end = get_time();
 
   printf("Calculate C : %f seconds elapsed\n", end - start);
@@ -172,8 +175,7 @@ int main() {
   // Evaluate Vector C
   for(idx = 0; idx < VECTOR_SIZE; idx++) {
     if(A[idx] + B[idx] != C[idx]) {
-      printf("Verification failed! A[%d] = %d, B[%d] = %d, C[%d] = %d\n",
-        idx, A[idx], idx, B[idx], idx, C[idx]);
+      printf("Verification failed! A[%d] = %d, B[%d] = %d, C[%d] = %d\n", idx, A[idx], idx, B[idx], idx, C[idx]);
       break;
     }
   }
