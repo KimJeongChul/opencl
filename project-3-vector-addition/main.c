@@ -154,7 +154,6 @@ int main() {
 
   printf("Send Vector A, B to GPU : %f seconds elapsed\n", end - start);
 
-
   // Execute Kernel
   start = get_time();
   clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
@@ -169,11 +168,6 @@ int main() {
 
   end = get_time();
   printf("Receive C from GPU : %f seconds elapsed\n", end - start);
-
-  for(idx = 0; idx < VECTOR_SIZE; idx++)
-    if(idx % 1000 == 0)
-      printf("%d\n", C[idx]);
-  printf("Finished !\n");
 
   // Evaluate Vector C
   for(idx = 0; idx < VECTOR_SIZE; idx++) {
