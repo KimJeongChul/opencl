@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <CL/cl.h>
 
-#define VECTOR_SIZE 32786
+#define VECTOR_SIZE 32768
 #define LOCAL_SIZE 256
 
 #define CHECK_ERROR(err) \
