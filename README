@@ -1,0 +1,5 @@
+compile
+$ gcc -o vector main.c -lOpenCL
+
+execution
+$ thorq --add --mode single --device gpu/1080 ./vector
